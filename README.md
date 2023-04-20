@@ -29,7 +29,7 @@ This bot makes use of the [undetected selenium browser](https://github.com/ultra
 
 ## Setup
 
-1. Download the Capsule Farmer Bot executable file from the repository
+1. Download the Capsule Farmer Bot executable file from the [repository](https://github.com/Baseult/LoLEsportsCapsuleFarmer/releases/tag/release)
 2. Start the executable file
 3. Add your accounts
 4. Adjust the settings
