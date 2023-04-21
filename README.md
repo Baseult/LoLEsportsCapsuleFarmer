@@ -1,9 +1,14 @@
 # LoLEsports Capsule Farmer Bot
 
 Are you tired of spending hours watching professional League of Legends games, only to get a few drops? 
+
 This Capsule Farmer Bot is here to farm all League of Legends Esports capsules for you!
 
-This bot makes use of the [undetected selenium browser](https://github.com/ultrafunkamsterdam/undetected-chromedriver) with headless mode.
+# Difference to other farmers
+
+Unlike other bots that use default selenium, which technically can be detected, or browsers without any interface, this bot utilizes the [undetected selenium browser](https://github.com/ultrafunkamsterdam/undetected-chromedriver), to ensure undetectability. 
+
+Additionally it actually opens a Chrome browser and watches the Lolesport games, to avoid any shadowbans.
 
 ## Video Preview
 [![](https://markdown-videos.deta.dev/youtube/Lra3KV_svn8)](https://youtu.be/Lra3KV_svn8)
