@@ -1679,7 +1679,6 @@ namespace LoLEsportsFarmer
             }
         }
 
-        //Die Start methode habe ich geändert zu tasks aber das ist maybe unnötig. ebenfalls funktioniert das starten eines neuen games nicht warum auch immer, wahrscheinlich weils von einem anderen thread aus gestartet wird?
 
         private void StartButton_Click(object sender, EventArgs e)
         {
