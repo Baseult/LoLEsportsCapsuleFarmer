@@ -49,7 +49,7 @@ That's it! The Bot will start watching all live matches on lolesports.com and fa
 
 ## Disclaimer
 
-Capsule Farmer Bot is designed to be used for educational and research purposes only.
+This Bot is designed to be used for educational and research purposes only.
 Please note that using this bot may violate the terms of service of lolesports.com and Riot Games. Use at your own risk.
 
 ## Contributing
