@@ -1,6 +1,6 @@
 # LoLEsports Capsule Farmer Bot
 
-Are you tired of spending hours watching professional League of Legends games, only to get a few drops? 
+Are you tired of wasting your time spending hours watching professional League of Legends games, only to get a few drops? 
 
 This Capsule Farmer Bot is here to farm all League of Legends Esports capsules for you!
 
@@ -22,7 +22,7 @@ Additionally it actually opens a Chrome browser and watches the Lolesport games,
 
 ## Features
 
-* Never miss a live match on lolesports.com and get all the drops
+* Automatically watch all live matches on lolesports.com to get all the drops
 * Switch between headless and non-headless mode to either watch the stream with the browser hidden or visible
 * Get a live view of the headless browser right within the debug view, making it easy to monitor the bot's performance in real-time.
 * Customize your viewing experience with sleep timers to skip matches at specific timeframes
@@ -49,6 +49,7 @@ That's it! The Bot will start watching all live matches on lolesports.com and fa
 
 ## Disclaimer
 
+Capsule Farmer Bot is designed to be used for educational and research purposes only.
 Please note that using this bot may violate the terms of service of lolesports.com and Riot Games. Use at your own risk.
 
 ## Contributing
