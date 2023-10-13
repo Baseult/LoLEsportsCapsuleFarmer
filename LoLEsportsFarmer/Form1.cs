@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition.Primitives;
 using System.Diagnostics;
 using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,9 +8,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Bunifu.UI.WinForms;
 using Bunifu.UI.WinForms.BunifuButton;
 using Newtonsoft.Json;
@@ -76,7 +79,7 @@ namespace LoLEsportsFarmer
 
         private readonly List<Drops> _dropList = new List<Drops>();
         private readonly List<RunningDrivers> _driverList = new List<RunningDrivers>();
-        private readonly List<User> _userList = new List<User>();
+        private List<User> _userList = new List<User>();
         private List<ActiveStreams> _activeStreams = new List<ActiveStreams>();
         private readonly List<RunningThreads> _runningThreads = new List<RunningThreads>();
         private bool _doCancel;
@@ -149,7 +152,7 @@ namespace LoLEsportsFarmer
             options.AddArgument("--disable-gpu");
             options.AddArgument("--disable-software-rasterizer");
             options.AddArgument("--mute-audio");
-            options.AddArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36");
+            options.AddArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993 Safari/537.36");
             options.SetLoggingPreference("browser", LogLevel.All);
 
             return UndetectedChromeDriver.Create(driverExecutablePath: await new ChromeDriverInstaller().Auto(), options: options, hideCommandPromptWindow: true);
@@ -266,7 +269,7 @@ namespace LoLEsportsFarmer
                         wait.Until(ExpectedConditions.ElementIsVisible(By.Name("username")));
                         driver.FindElement(By.Name("username")).SendKeys(username);
                         driver.FindElement(By.Name("password")).SendKeys(password);
-                        driver.FindElement(By.CssSelector("button[type=submit]")).Click();
+                        driver.FindElement(By.CssSelector("button[data-testid=btn-signin-submit]")).Click();
                         wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("div[data-testid='riotbar:account:summonername']")));
                     }
                     else
@@ -274,7 +277,7 @@ namespace LoLEsportsFarmer
                         wait.Until(browser => ((IJavaScriptExecutor)driver).ExecuteScript("return document.querySelector('input[name=\"username\"][data-testid=\"input-username\"][type=\"text\"]');"));
                         ((IWebElement)((IJavaScriptExecutor)driver).ExecuteScript("return document.querySelector('input[name=\"username\"][data-testid=\"input-username\"]');")).SendKeys(username);
                         ((IWebElement)((IJavaScriptExecutor)driver).ExecuteScript("return document.querySelector('input[name=\"password\"][data-testid=\"input-password\"]');")).SendKeys(password);
-                        ((IJavaScriptExecutor)driver).ExecuteScript("document.querySelector('button[type=\"submit\"]').click();");
+                        ((IJavaScriptExecutor)driver).ExecuteScript("document.querySelector('button[data-testid=\"btn-signin-submit\"]').click();");
                         wait.Until(browser => ((IJavaScriptExecutor)driver).ExecuteScript("return document.querySelector('[data-testid=\"riotbar:account:summonername\"]');"));
                     }
 
@@ -287,18 +290,17 @@ namespace LoLEsportsFarmer
                 {
                     try
                     {
-                        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
                         if (!javascriptBox.Checked)
                         {
-                            wait.Until(ExpectedConditions.ElementIsVisible(
-                                By.CssSelector(".status-message.text__web-error")));
+                            wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("[data-testid=error-message")));
                         }
                         else
                         {
                             wait.Until(browser =>
                                 ((IJavaScriptExecutor)driver).ExecuteScript(
-                                    "return document.querySelector('.status-message.text__web-error');"));
+                                    "return document.querySelector('[data-testid=\"error-message\"]');"));
                         }
 
                         Console(
@@ -309,13 +311,52 @@ namespace LoLEsportsFarmer
                     }
                     catch
                     {
-                        failedloginattempts++;
-                        Console($"User: {username} - Match: {matchName} - An error occurred while logging in. - Error: {e.Message}");
 
-                        if (failedloginattempts > 3)
+                        // If the specific iframe is found, wait for 10 seconds
+                        try
                         {
-                            Label("Error > Could not login", label);
-                            return Task.FromResult(false);
+
+
+                            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+
+                            if (!javascriptBox.Checked)
+                            {
+                                wait.Until(ExpectedConditions.FrameToBeAvailableAndSwitchToIt(By.CssSelector("iframe[src*='hcaptcha.com']")));
+                            }
+                            else
+                            {
+                                wait.Until(browser =>
+                                    ((IJavaScriptExecutor)driver).ExecuteScript(
+                                        "return document.querySelector('iframe[src*=\"hcaptcha.com\"]');"));
+                            }
+
+                            Console($"User: {username} - Match: {matchName} - An error occurred while logging in. - Captcha found!");
+                            Console($"User: {username} - Match: {matchName} - If you use a VPN disable it to prevent Captchas");
+                            Console($"User: {username} - Match: {matchName} - Otherwise restart this bot with 'headless mode' disabled");
+                            Console($"User: {username} - Match: {matchName} - Then you need to manually solve the captcha");
+                            Label("Action required > Captcha found", label);
+
+                            if (!javascriptBox.Checked)
+                            {
+                                wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("div[data-testid='riotbar:account:summonername']")));
+                            }
+                            else
+                            {
+                                wait.Until(browser => ((IJavaScriptExecutor)driver).ExecuteScript("return document.querySelector('[data-testid=\"riotbar:account:summonername\"]');"));
+                            }
+
+                            return Task.FromResult(true);
+                        }
+                        catch
+                        {
+                            failedloginattempts++;
+                            Console($"User: {username} - Match: {matchName} - An error occurred while logging in. - Error: {e.Message}");
+
+                            if (failedloginattempts > 3)
+                            {
+                                Label("Error > Could not login", label);
+                                return Task.FromResult(false);
+                            }
                         }
                     }
                 }
@@ -1295,6 +1336,8 @@ namespace LoLEsportsFarmer
         {
             var isEmpty = true;
 
+            var users = new List<User>();
+
             foreach (Control control in containerPanel.Controls)
             {
                 if (control is UserControl userControl)
@@ -1302,7 +1345,7 @@ namespace LoLEsportsFarmer
                     var usernameTextBox = userControl.Controls.OfType<BunifuTextBox>().FirstOrDefault(c => c.Name == "usernameTextBox");
                     var passwordTextBox = userControl.Controls.OfType<BunifuTextBox>().FirstOrDefault(c => c.Name == "passwordTextBox");
 
-                    if (usernameTextBox != null && passwordTextBox != null && usernameTextBox.Text != "" && passwordTextBox.Text != "")
+                    if (usernameTextBox != null && passwordTextBox != null && !string.IsNullOrEmpty(usernameTextBox.Text) && !string.IsNullOrEmpty(passwordTextBox.Text))
                     {
                         isEmpty = false;
 
@@ -1311,11 +1354,16 @@ namespace LoLEsportsFarmer
                         {
                             // Add user to the list
                             _userList.Add(new User { Username = usernameTextBox.Text, Password = passwordTextBox.Text });
+                            users.Add(new User { Username = usernameTextBox.Text, Password = passwordTextBox.Text });
                             Console($"Added user: {usernameTextBox.Text}");
                         }
                     }
                 }
             }
+
+            // Serialize and save user data to a JSON file
+            string json = JsonConvert.SerializeObject(users);
+            File.WriteAllText("users.json", json);
 
             return isEmpty;
         }
@@ -1525,16 +1573,16 @@ namespace LoLEsportsFarmer
             }
         }
 
-
-        private void AddNewUserFields()
+        private void AddNewUserFields(string username = "", string password = "")
         {
-            // Create a new user control that contains two text boxes for username and password
+            // Create a new user control with the given username and password
             var userControl1 = new UserControl
             {
                 Location = new Point(5, _lastYPosition - containerPanel.VerticalScroll.Value + 5),
                 Size = new Size(containerPanel.Width - 40, 20)
             };
 
+            // Create username TextBox
             var userBox = new BunifuTextBox
             {
                 BackColor = Color.Transparent,
@@ -1562,10 +1610,12 @@ namespace LoLEsportsFarmer
                 WordWrap = true,
                 Name = "usernameTextBox",
                 Location = new Point(0, 0),
-                Size = new Size((userControl1.Width / 2) - 20, userControl1.Height)
+                Size = new Size((userControl1.Width / 2) - 20, userControl1.Height),
+                Text = username // Set the username
             };
             userControl1.Controls.Add(userBox);
 
+            // Create password TextBox
             var passwordBox = new BunifuTextBox
             {
                 BackColor = Color.Transparent,
@@ -1594,7 +1644,8 @@ namespace LoLEsportsFarmer
                 WordWrap = true,
                 Name = "passwordTextBox",
                 Location = new Point((userControl1.Width / 2) - 15, 0),
-                Size = new Size((userControl1.Width / 2) - 20, userControl1.Height)
+                Size = new Size((userControl1.Width / 2) - 20, userControl1.Height),
+                Text = password // Set the password
             };
             userControl1.Controls.Add(passwordBox);
 
@@ -1638,6 +1689,7 @@ namespace LoLEsportsFarmer
             _lastYPosition += 25;
         }
 
+       
         private void AdjustUserControlPositions()
         {
             var yPosition = 0;
@@ -1679,6 +1731,7 @@ namespace LoLEsportsFarmer
             }
         }
 
+        //Die Start methode habe ich geändert zu tasks aber das ist maybe unnötig. ebenfalls funktioniert das starten eines neuen games nicht warum auch immer, wahrscheinlich weils von einem anderen thread aus gestartet wird?
 
         private void StartButton_Click(object sender, EventArgs e)
         {
@@ -1712,6 +1765,19 @@ namespace LoLEsportsFarmer
         private void Form1_Load(object sender, EventArgs e)
         {
             CheckForIllegalCrossThreadCalls = false;
+
+            if (File.Exists("users.json"))
+            {
+                string json = File.ReadAllText("users.json");
+                _userList = JsonConvert.DeserializeObject<List<User>>(json);
+
+                // Populate the user interface with loaded user data
+                foreach (var user in _userList)
+                {
+                    AddNewUserFields(user.Username, user.Password);
+                    startButton.Enabled = true;
+                }
+            }
         }
 
         private const int MaxLines = 200;
